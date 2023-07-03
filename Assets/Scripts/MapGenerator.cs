@@ -10,7 +10,7 @@ public class MapGenerator : MonoBehaviour
 {
     [SerializeField] private Button button;
     [SerializeField] private GameObject cube;
-    [SerializeField] private int HorizontalSize;
+    [SerializeField] private int horizontalSize;
     [SerializeField] private int verticalSize;
     [SerializeField] private float randomValue;
     private Transform playground;
@@ -23,6 +23,7 @@ public class MapGenerator : MonoBehaviour
     private int[] firstRow;
 
     private int[][] presetRow = {
+        new int[] {1, 1, 1,  0, 1 },
         new int[] { -1, -1, -1, -1, -1},
         new int[] { -1, 1, 1, -1},
         new int[] { -1, -1, 1, -1},
@@ -49,7 +50,7 @@ public class MapGenerator : MonoBehaviour
             Destroy(playground.gameObject);
         }
         playground = Instantiate(new GameObject(), transform).GetComponent<Transform>();
-        columnSize = Mathf.FloorToInt(HorizontalSize / 2);
+        columnSize = Mathf.FloorToInt(horizontalSize / 2);
         rowSize = Mathf.CeilToInt(verticalSize / 2);
         lastRow = new int[columnSize];
         map = new int[columnSize];
@@ -58,15 +59,13 @@ public class MapGenerator : MonoBehaviour
         
         
         DrawHorizontalBorder();
-        
-        GenerateMap(1, 1, columnSize - 1);
-        Array.Copy(firstRow, lastRow, firstRow.Length);
-        GenerateMap(0, -1, columnSize - 1);
+        Array.Fill(lastRow, 1);
+        GenerateMap(-rowSize + 1, 1, columnSize - 1);
     }
 
     private void GenerateMap(int firstRowIndex, int step, int reachableMapSize)
     {
-        for (int j = firstRowIndex; Mathf.Abs(j) < rowSize; j += step)
+        for (int j = firstRowIndex; j < rowSize; j += step)
         {
             debugv = j;
             DrawVerticalBorder(j);
@@ -305,11 +304,6 @@ public class MapGenerator : MonoBehaviour
 
     private void EditOneToLastRow(int row)
     {
-        Debug.LogError(row);
-        for (int index = map.Length - 2; index >= 0; index--)
-        {
-            Debug.LogError(index + " --> " +map[index]);
-        }
         for (int index = map.Length - 2; index >= 0; index--)
         {
             if (MapStatus(index) == 1)
@@ -496,6 +490,10 @@ public class MapGenerator : MonoBehaviour
         row += 2; //Todo: You can do much better
         if (row < presetRow.Length && row >= 0)
         {
+            Debug.LogError((row - 2) + "  ----------------------> ");
+            Debug.LogError((row - 2) + "  ----------------------> ");
+            Debug.LogError((row - 2) + "  ----------------------> ");
+            Debug.LogError((row - 2) + "  ----------------------> ");
             Debug.LogWarning("--------------------------------------------------------------");
             Array.Copy(presetRow[row], rowHint, presetRow[row].Length);
         }
