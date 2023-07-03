@@ -22,6 +22,10 @@ public class MapGenerator : MonoBehaviour
     private int[] rowHint;
     private int[] firstRow;
     private int[] verticalPortals;
+    
+    private int[] connectivityStatus;
+    private int[] lastRowConnectivity;
+    private int connectivityId;
 
     private int[][] presetRow = {
         new int[] {1, 1, 0,  1, 1 },
@@ -56,6 +60,10 @@ public class MapGenerator : MonoBehaviour
         rowHint = new int[columnSize];
         firstRow = new int[columnSize];
         verticalPortals = new int[columnSize];
+        connectivityStatus = new int[columnSize];
+        lastRowConnectivity = new int[columnSize];
+        connectivityId = 0;
+
         presetRowIndex = Mathf.CeilToInt((verticalSize - presetRow.Length) / 2f); 
         
         Array.Fill(lastRow, 1);
@@ -89,7 +97,6 @@ public class MapGenerator : MonoBehaviour
                 }
                 if (MustPlaceBlock(i))
                 {
-                    PlaceBlock(i, j);
                     map[i] = 1;
                 }
             
@@ -119,7 +126,6 @@ public class MapGenerator : MonoBehaviour
 
                 if (MustPlaceBlock(i))
                 {
-                    PlaceBlock(i, j);
                     map[i] = 1;
                     continue;
                 }
@@ -128,7 +134,6 @@ public class MapGenerator : MonoBehaviour
                 {
                     if (Random.value > randomValue)
                     {
-                        PlaceBlock(i, j);
                         map[i] = 1;
                         continue;
                     }
@@ -141,15 +146,26 @@ public class MapGenerator : MonoBehaviour
                     // }
                 }
                 
-
-
-                PlaceDot(i, j);
                 map[i] = -1;
-                //TODO: Other rows first dot
             }
-
+            
             Array.Clear(rowHint, 0, rowHint.Length);
 
+            if (CheckConnectivity() == false)
+            {
+                string lastRowConnectivityLine = "";
+                string currentRowConnectivityLine = "";
+                for (int i = 0; i < connectivityStatus.Length; i++)
+                {
+                    lastRowConnectivityLine += (lastRowConnectivity[i]) + " ";
+                    currentRowConnectivityLine += (connectivityStatus[i]) + " ";
+                }
+            
+                Debug.Log(lastRowConnectivityLine);
+                Debug.Log(currentRowConnectivityLine);
+                yield return new WaitForSeconds(5f);
+            }
+            
             CalculateNextRow();
             if (Mathf.Abs(j) == verticalSize - 2)
             {
@@ -157,6 +173,18 @@ public class MapGenerator : MonoBehaviour
                 CalculateLastRow();
             }
 
+            for (int i = 0; i < map.Length; i++)
+            {
+                if (map[i] == 1)
+                {
+                    PlaceBlock(i, j);
+                }
+                else
+                {
+                    PlaceDot(i, j);
+                }
+            }
+            
 
             string line = "";
             for (int i = 0; i < map.Length; i++)
@@ -170,12 +198,16 @@ public class MapGenerator : MonoBehaviour
                 nextRowLine += (rowHint[i]) + " ";
             }
             Debug.Log(nextRowLine);
+            
             Array.Copy(map, lastRow, map.Length);
             if (j == 0)
             {
                 Array.Copy(map, firstRow, map.Length);
             }
 
+            Array.Copy(connectivityStatus, lastRowConnectivity, connectivityStatus.Length);
+            Array.Clear(connectivityStatus, 0, connectivityStatus.Length);
+            
             Array.Clear(map, 0, map.Length);
             map[reachableMapSize] = 1;
         }
@@ -321,7 +353,6 @@ public class MapGenerator : MonoBehaviour
             }
             if (lastRow[index] != -1)
             {
-                PlaceBlock(index, row);
                 map[index] = 1;
             }
 
@@ -348,12 +379,10 @@ public class MapGenerator : MonoBehaviour
                 Debug.Log("%%%%%%%  double: " + index);
                 if (lastRow[index] != -1)
                 {
-                    PlaceBlock(index, row);
                     map[index] = 1;
                 }
                 else
                 {
-                    PlaceBlock(CalculateIndex(index, -1), row);
                     map[CalculateIndex(index, -1)] = 1;
                 }
             }
@@ -370,21 +399,27 @@ public class MapGenerator : MonoBehaviour
                 disjointDots++;
         }
 
-        if (disjointDots <= 1)
+        if (disjointDots <= 1 && MapStatus(0) == -1)
         {
             List<int> firstRowPortalCandidates = new List<int>();
             for (int i = 0; i < firstRow.Length; i++)
             {
-                if (firstRow[i] == -1)
+                if (firstRow[i] == -1 )
                 {
                     firstRowPortalCandidates.Add(i);
                 }
             }
             int portalIndex = firstRowPortalCandidates[Random.Range(0, firstRowPortalCandidates.Count)];
             Array.Fill(rowHint, 1);
-            rowHint[portalIndex] = -1;
             PlaceVerticalPortal(portalIndex);
-            return;
+            for (int i = portalIndex; i >= 0; i--)
+            {
+                rowHint[i] = -1;
+                if (MapStatus(i) == -1)
+                {
+                    return;
+                }
+            }
         }
 
         bool firstDots = false;
@@ -476,6 +511,7 @@ public class MapGenerator : MonoBehaviour
             offset = 0.5f;
         }
         Debug.Log("v h " + debugv + " " + debugh + " ### " + "Place Block");
+        connectivityStatus[hIndex] = 0;
         Instantiate(cube,
             new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1 - 3),
             Quaternion.identity,
@@ -495,7 +531,96 @@ public class MapGenerator : MonoBehaviour
 
     private void PlaceDot(int hIndex, int vIndex)
     {
+        
         Debug.Log("v h " + debugv + " " + debugh + " ### " + "Place Dot");
+    }
+
+    private bool CheckConnectivity()
+    {
+        for (int i = 0; i < map.Length; i++)
+        {
+            if (map[i] == -1)
+            {
+                SetConnectivityStatus(i);
+            }
+        }
+
+        HashSet<int> isolatedCells = new HashSet<int>();
+        for (int i = 0; i < lastRowConnectivity.Length; i++)
+        {
+            if (lastRowConnectivity[i] != 0 &&
+                connectivityStatus.Contains(lastRowConnectivity[i]) == false)
+            {
+                isolatedCells.Add(lastRowConnectivity[i]);
+            }   
+        }
+
+        if (isolatedCells.Count > 0)
+        {
+            ConnectCells(isolatedCells);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ConnectCells(HashSet<int> isolatedIds)
+    {
+        for (int i = 0; i < lastRowConnectivity.Length; i++)
+        {
+            if (isolatedIds.Contains(lastRowConnectivity[i]))
+            {
+                if (MustPlaceBlock(i) == false)
+                {
+                    map[i] = -1;
+                    if (Random.value > randomValue)
+                    {
+                        isolatedIds.Remove(lastRowConnectivity[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    private void SetConnectivityStatus(int index)
+    {
+        //TODO: can do better
+        if (connectivityStatus[CalculateIndex(index, -1)] +
+            lastRowConnectivity[index] +
+            connectivityStatus[CalculateIndex(index, 1)] <= 0)
+        {
+            connectivityId += 1;
+            connectivityStatus[index] = connectivityId;
+        }
+        else if (connectivityStatus[CalculateIndex(index, -1)] > 0)
+        {
+            connectivityStatus[index] = connectivityStatus[CalculateIndex(index, -1)];
+            if (lastRowConnectivity[index] > 0 && lastRowConnectivity[index] != connectivityStatus[index])
+            {
+                UpdateConnectivityStatus(lastRowConnectivity[index], connectivityStatus[index]);
+            }
+        }
+
+        else if (lastRowConnectivity[index] > 0)
+        {
+            connectivityStatus[index] = lastRowConnectivity[index];
+        }
+    }
+
+    private void UpdateConnectivityStatus(int oldId, int newId)
+    {
+        for (int i = 0; i < connectivityStatus.Length; i++)
+        {
+            if (connectivityStatus[i] == oldId)
+            {
+                connectivityStatus[i] = newId;
+            }
+            
+            if (lastRowConnectivity[i] == oldId)
+            {
+                lastRowConnectivity[i] = newId;
+            }
+        }
     }
     
     private void PlaceVerticalPortal(int hIndex)
@@ -560,14 +685,12 @@ public class MapGenerator : MonoBehaviour
             if (rowHint[i] == -1)
             {
                 Debug.Log("Draw Predetermind   Dot " + row  + " " + i);
-                PlaceDot(i, row);
                 map[i] = -1;
             }
 
             if (rowHint[i] == 1)
             {
                 Debug.Log("Draw Predetermind Block " + row  + " " + i);
-                PlaceBlock(i, row);
                 map[i] = 1;
             }
         }
