@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.Android;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -53,7 +53,7 @@ public class MapGenerator : MonoBehaviour
         map = new int[columnSize];
         rowHint = new int[columnSize];
         presetRowIndex = Mathf.CeilToInt((verticalSize - presetRow.Length) / 2f); 
-
+        
         DrawHorizontalBorder();
         Array.Fill(lastRow, 1);
         StartCoroutine(GenerateMap());
@@ -62,9 +62,15 @@ public class MapGenerator : MonoBehaviour
     private IEnumerator GenerateMap()
     {
         int reachableMapSize = columnSize - 1;
+        CheckForData(0);
+        int firstRowMin = rowHint.Min();
+        if (firstRowMin >= 0)
+        {
+            rowHint[Random.Range(0, rowHint.Length)] = -1; //Add at least one dot
+        }
         for (int j = 0; j < verticalSize; j ++)
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.2f);
             debugv = j;
             DrawVerticalBorder(j);
             CheckForData(j);
