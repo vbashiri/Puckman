@@ -23,11 +23,11 @@ public class MapGenerator : MonoBehaviour
     private int[] firstRow;
 
     private int[][] presetRow = {
-        new int[] {1, 1, 1,  0, 1 },
-        new int[] { -1, -1, -1, -1, -1},
-        new int[] { -1, 1, 1, -1},
-        new int[] { -1, -1, 1, -1},
-        new int[] { 1, 1, 1, -1},
+        new int[] {1, 2, 0,  1, 1 },
+        new int[] { -2, -2, -2, -1, -1},
+        new int[] { -2, 2, 2, -1},
+        new int[] { -2, -2, 2, -1},
+        new int[] { 2, 2, 2, -1},
         new int[] { -1, -1, -1, -1, -1}
     };
 
@@ -76,6 +76,10 @@ public class MapGenerator : MonoBehaviour
             for (int i = 0; i < reachableMapSize; i++)
             {
                 debugh = i;
+                if (MapStatus(i) == -1 || MapStatus(i) == 1)
+                {
+                    continue;
+                }
                 if (MustPlaceBlock(i))
                 {
                     PlaceBlock(i, j);
@@ -495,7 +499,23 @@ public class MapGenerator : MonoBehaviour
             Debug.LogError((row - 2) + "  ----------------------> ");
             Debug.LogError((row - 2) + "  ----------------------> ");
             Debug.LogWarning("--------------------------------------------------------------");
-            Array.Copy(presetRow[row], rowHint, presetRow[row].Length);
+            for (int i = 0; i < Mathf.Min(presetRow[row].Length, rowHint.Length) ; i++)
+            {
+                if (presetRow[row][i] == 2)
+                {
+                    rowHint[i] = 1; ;
+                }
+                else if (presetRow[row][i] == -2)
+                {
+                    rowHint[i] = -1;
+                }
+                else if (rowHint[i] == 0)
+                {
+                    rowHint[i] = presetRow[row][i];
+                }
+                
+
+            }
         }
     }
 
