@@ -15,24 +15,21 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private float randomValue;
     private Transform playground;
     private int columnSize;
-    private int rowSize;
-    
+    private bool isEvenWidth;
+
     private int[] lastRow;
     private int[] map;
     private int[] rowHint;
-    private int[] firstRow;
 
     private int[][] presetRow = {
-        new int[] {1, 2, 0,  1, 1 },
-        new int[] { -2, -2, -2, -1, -1},
+        new int[] {1, 1, 0,  1, 1 },
+        new int[] { -2, -2, -2, -2, -1},
         new int[] { -2, 2, 2, -1},
         new int[] { -2, -2, 2, -1},
         new int[] { 2, 2, 2, -1},
         new int[] { -1, -1, -1, -1, -1}
     };
-
-    private int[] firstTopRow = new[] {-1, 1, 1};
-    private int[] firstBottomRow = new[] {1, 1, 1};
+    private int presetRowIndex;
 
     private int debugv = 0;
     private int debugh = 0;
@@ -50,23 +47,24 @@ public class MapGenerator : MonoBehaviour
             Destroy(playground.gameObject);
         }
         playground = Instantiate(new GameObject(), transform).GetComponent<Transform>();
-        columnSize = Mathf.FloorToInt(horizontalSize / 2);
-        rowSize = Mathf.CeilToInt(verticalSize / 2);
+        columnSize = Mathf.CeilToInt((horizontalSize + 2f) / 2f);
+        isEvenWidth = horizontalSize % 2 == 0;
         lastRow = new int[columnSize];
         map = new int[columnSize];
         rowHint = new int[columnSize];
-        firstRow = new int[columnSize];
-        
-        
+        presetRowIndex = Mathf.CeilToInt((verticalSize - presetRow.Length) / 2f); 
+
         DrawHorizontalBorder();
         Array.Fill(lastRow, 1);
-        GenerateMap(-rowSize + 1, 1, columnSize - 1);
+        StartCoroutine(GenerateMap());
     }
 
-    private void GenerateMap(int firstRowIndex, int step, int reachableMapSize)
+    private IEnumerator GenerateMap()
     {
-        for (int j = firstRowIndex; j < rowSize; j += step)
+        int reachableMapSize = columnSize - 1;
+        for (int j = 0; j < verticalSize; j ++)
         {
+            yield return new WaitForSeconds(1f);
             debugv = j;
             DrawVerticalBorder(j);
             CheckForData(j);
@@ -83,10 +81,6 @@ public class MapGenerator : MonoBehaviour
                 if (MustPlaceBlock(i))
                 {
                     PlaceBlock(i, j);
-                    if (i > 0)
-                    {
-                        PlaceBlock(-i, j);
-                    }
                     map[i] = 1;
                 }
             
@@ -117,7 +111,6 @@ public class MapGenerator : MonoBehaviour
                 if (MustPlaceBlock(i))
                 {
                     PlaceBlock(i, j);
-                    PlaceBlock(-i, j);
                     map[i] = 1;
                     continue;
                 }
@@ -127,7 +120,6 @@ public class MapGenerator : MonoBehaviour
                     if (Random.value > randomValue)
                     {
                         PlaceBlock(i, j);
-                        PlaceBlock(-i, j);
                         map[i] = 1;
                         continue;
                     }
@@ -144,14 +136,13 @@ public class MapGenerator : MonoBehaviour
 
                 PlaceDot(i, j);
                 map[i] = -1;
-                PlaceDot(-i, j);
                 //TODO: Other rows first dot
             }
 
             Array.Clear(rowHint, 0, rowHint.Length);
 
             CalculateNextRow();
-            if (Mathf.Abs(j) == rowSize - 2)
+            if (Mathf.Abs(j) == verticalSize - 2)
             {
                 EditOneToLastRow(j);
                 CalculateLastRow();
@@ -171,10 +162,7 @@ public class MapGenerator : MonoBehaviour
             }
             Debug.Log(nextRowLine);
             Array.Copy(map, lastRow, map.Length);
-            if (j == firstRowIndex)
-            {
-                Array.Copy(map, firstRow, map.Length);
-            }
+
             Array.Clear(map, 0, map.Length);
             map[reachableMapSize] = 1;
         }
@@ -256,8 +244,11 @@ public class MapGenerator : MonoBehaviour
     {
         if (distance <= 0)
         {
-
-                return Mathf.Abs(index + distance);
+            if (isEvenWidth && index + distance < 0)
+            {
+                return Mathf.Abs(index + distance + 1);
+            }
+            return Mathf.Abs(index + distance);
         }
 
         if (index + distance < map.Length)
@@ -317,7 +308,6 @@ public class MapGenerator : MonoBehaviour
             if (lastRow[index] != -1)
             {
                 PlaceBlock(index, row);
-                PlaceBlock(-index, row);
                 map[index] = 1;
             }
 
@@ -345,13 +335,11 @@ public class MapGenerator : MonoBehaviour
                 if (lastRow[index] != -1)
                 {
                     PlaceBlock(index, row);
-                    PlaceBlock(-index, row);
                     map[index] = 1;
                 }
                 else
                 {
                     PlaceBlock(CalculateIndex(index, -1), row);
-                    PlaceBlock(-CalculateIndex(index, -1), row);
                     map[CalculateIndex(index, -1)] = 1;
                 }
             }
@@ -458,11 +446,27 @@ public class MapGenerator : MonoBehaviour
     
     private void PlaceBlock(int hIndex, int vIndex)
     {
+        var offset = 0f;
+        if (isEvenWidth)
+        {
+            offset = 0.5f;
+        }
         Debug.Log("v h " + debugv + " " + debugh + " ### " + "Place Block");
         Instantiate(cube,
-            new Vector3(hIndex * 1, 0, vIndex  * - 1 - 3),
+            new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1 - 3),
             Quaternion.identity,
             playground);
+
+        if (hIndex == 0 && isEvenWidth == false)
+        {
+            return;
+        }
+        
+        Instantiate(cube,
+            new Vector3(hIndex * -1 - offset, 0, vIndex  * - 1 - 3),
+            Quaternion.identity,
+            playground);
+        
     }
 
     private void PlaceDot(int hIndex, int vIndex)
@@ -475,46 +479,36 @@ public class MapGenerator : MonoBehaviour
         for (int i = 0; i < columnSize; i++)
         {
             Debug.Log("first row indeed");
-            PlaceBlock(i, -rowSize);
-            PlaceBlock(-i, -rowSize);
-            PlaceBlock(i, rowSize);
-            PlaceBlock(-i, rowSize);
+            PlaceBlock(i, -1);
+            PlaceBlock(i, verticalSize);
         }
     }
 
     private void DrawVerticalBorder(int row)
     {
         PlaceBlock(columnSize - 1, row);
-        PlaceBlock(-columnSize + 1, row);
         map[columnSize - 1] = 1;
     }
 
     private void CheckForData(int row)
     {
-        row += 2; //Todo: You can do much better
-        if (row < presetRow.Length && row >= 0)
+        int rowIndex = row - presetRowIndex;
+        if (rowIndex < presetRow.Length && rowIndex >= 0)
         {
-            Debug.LogError((row - 2) + "  ----------------------> ");
-            Debug.LogError((row - 2) + "  ----------------------> ");
-            Debug.LogError((row - 2) + "  ----------------------> ");
-            Debug.LogError((row - 2) + "  ----------------------> ");
-            Debug.LogWarning("--------------------------------------------------------------");
-            for (int i = 0; i < Mathf.Min(presetRow[row].Length, rowHint.Length) ; i++)
+            for (int i = 0; i < Mathf.Min(presetRow[rowIndex].Length, rowHint.Length) ; i++)
             {
-                if (presetRow[row][i] == 2)
+                if (presetRow[rowIndex][i] == 2)
                 {
                     rowHint[i] = 1; ;
                 }
-                else if (presetRow[row][i] == -2)
+                else if (presetRow[rowIndex][i] == -2)
                 {
                     rowHint[i] = -1;
                 }
                 else if (rowHint[i] == 0)
                 {
-                    rowHint[i] = presetRow[row][i];
+                    rowHint[i] = presetRow[rowIndex][i];
                 }
-                
-
             }
         }
     }
@@ -528,7 +522,6 @@ public class MapGenerator : MonoBehaviour
             {
                 Debug.Log("Draw Predetermind   Dot " + row  + " " + i);
                 PlaceDot(i, row);
-                PlaceDot(-i, row);
                 map[i] = -1;
             }
 
@@ -536,7 +529,6 @@ public class MapGenerator : MonoBehaviour
             {
                 Debug.Log("Draw Predetermind Block " + row  + " " + i);
                 PlaceBlock(i, row);
-                PlaceBlock(-i, row);
                 map[i] = 1;
             }
         }
