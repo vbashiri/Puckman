@@ -20,6 +20,8 @@ public class MapGenerator : MonoBehaviour
     private int[] lastRow;
     private int[] map;
     private int[] rowHint;
+    private int[] firstRow;
+    private int[] verticalPortals;
 
     private int[][] presetRow = {
         new int[] {1, 1, 0,  1, 1 },
@@ -52,9 +54,10 @@ public class MapGenerator : MonoBehaviour
         lastRow = new int[columnSize];
         map = new int[columnSize];
         rowHint = new int[columnSize];
+        firstRow = new int[columnSize];
+        verticalPortals = new int[columnSize];
         presetRowIndex = Mathf.CeilToInt((verticalSize - presetRow.Length) / 2f); 
         
-        DrawHorizontalBorder();
         Array.Fill(lastRow, 1);
         StartCoroutine(GenerateMap());
     }
@@ -168,10 +171,15 @@ public class MapGenerator : MonoBehaviour
             }
             Debug.Log(nextRowLine);
             Array.Copy(map, lastRow, map.Length);
+            if (j == 0)
+            {
+                Array.Copy(map, firstRow, map.Length);
+            }
 
             Array.Clear(map, 0, map.Length);
             map[reachableMapSize] = 1;
         }
+        DrawHorizontalBorder();
     }
 
     private bool MustPlaceBlock(int index)
@@ -361,29 +369,23 @@ public class MapGenerator : MonoBehaviour
             if (MapStatus(i) == -1 && MapStatus(i, 1) == 1)
                 disjointDots++;
         }
-        
-        Debug.Log("==================>> disjointDots:: " + disjointDots);
-        
+
         if (disjointDots <= 1)
         {
-            for (int i = 0; i < map.Length; i++)
+            List<int> firstRowPortalCandidates = new List<int>();
+            for (int i = 0; i < firstRow.Length; i++)
             {
-                if (MapStatus(i) == 1)
+                if (firstRow[i] == -1)
                 {
-                    rowHint[i] = -1;
-                    continue;
+                    firstRowPortalCandidates.Add(i);
                 }
-
-                rowHint[i] = -1;
-                for (int j = i+1; j < map.Length; j++)
-                {
-                    rowHint[j] = 1;
-                }
-                return;
             }
+            int portalIndex = firstRowPortalCandidates[Random.Range(0, firstRowPortalCandidates.Count)];
+            Array.Fill(rowHint, 1);
+            rowHint[portalIndex] = -1;
+            PlaceVerticalPortal(portalIndex);
+            return;
         }
-
-        int jointedDots = 0; //todo: remove
 
         bool firstDots = false;
         bool secondDots = false;
@@ -400,6 +402,10 @@ public class MapGenerator : MonoBehaviour
             {
                 Debug.Log(index + "   B");
                 rowHint[index] = -1;
+                if (firstRow[index] == -1 && Random.value > randomValue)
+                {
+                    PlaceVerticalPortal(index);
+                }
                 continue;
             }
 
@@ -414,6 +420,10 @@ public class MapGenerator : MonoBehaviour
             {
                 Debug.Log(index + "   D");
                 rowHint[index] = -1;
+                if (firstRow[index] == -1 && Random.value > randomValue)
+                {
+                    PlaceVerticalPortal(index);
+                }
                 firstDots = false;
                 secondDots = true;
                 continue;
@@ -424,6 +434,10 @@ public class MapGenerator : MonoBehaviour
                 Debug.Log(index + "   E");
                 firstDots = true;
                 rowHint[index] = -1;
+                if (firstRow[index] == -1 && Random.value > randomValue)
+                {
+                    PlaceVerticalPortal(index);
+                }
                 continue;
             }
             
@@ -442,6 +456,10 @@ public class MapGenerator : MonoBehaviour
                 firstDots = true;
                 secondDots = false;
                 rowHint[index] = -1;
+                if (firstRow[index] == -1 && Random.value > randomValue)
+                {
+                    PlaceVerticalPortal(index);
+                }
             }
             
         }
@@ -479,12 +497,27 @@ public class MapGenerator : MonoBehaviour
     {
         Debug.Log("v h " + debugv + " " + debugh + " ### " + "Place Dot");
     }
+    
+    private void PlaceVerticalPortal(int hIndex)
+    {
+        Debug.Log("v h " + debugv + " " + debugh + " ### " + "Place Portal");
+        if (verticalPortals[CalculateIndex(hIndex, 1)] == -1 ||
+            verticalPortals[CalculateIndex(hIndex, -1)] == -1)
+        {
+            return;
+        }
+        verticalPortals[hIndex] = -1;
+    }
 
     private void DrawHorizontalBorder()
     {
         for (int i = 0; i < columnSize; i++)
         {
-            Debug.Log("first row indeed");
+            if (verticalPortals[i] == -1)
+            {
+                //TODO: actually place Portal
+                continue;
+            }
             PlaceBlock(i, -1);
             PlaceBlock(i, verticalSize);
         }
