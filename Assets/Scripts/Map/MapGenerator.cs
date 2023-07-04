@@ -6,12 +6,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class MapGenerator : MonoBehaviour
+public class MapGenerator
 {
-    [SerializeField] private Button button;
-    [SerializeField] private MapDrawer mapDrawer;
-    [SerializeField] private float randomValue;
-
     private List<int[]> map;
 
     private int[] lastRow;
@@ -36,19 +32,14 @@ public class MapGenerator : MonoBehaviour
 
     private int debugv = 0;
     private int debugh = 0;
-    void Start()
-    {
-        button.onClick.AddListener(SetupMap);
-        SetupMap();
-        
-    }
 
-    private void SetupMap()
+
+    public List<int[]> SetupMap()
     {
 
         InitializeVariables();
 
-        GenerateMap();
+        return GenerateMap();
     }
 
     private void InitializeVariables()
@@ -59,15 +50,21 @@ public class MapGenerator : MonoBehaviour
         rowHint = new int[MapUtils.ColumnSize];
         firstRow = new int[MapUtils.ColumnSize];
         verticalPortals = new int[MapUtils.ColumnSize];
-        Array.Fill(verticalPortals, 1);
+        for (int i = 0; i < verticalPortals.Length; i++)
+        {
+            verticalPortals[i] = 1;
+        }
         connectivityStatus = new int[MapUtils.ColumnSize];
         lastRowConnectivity = new int[MapUtils.ColumnSize];
         connectivityId = 0;
-        presetRowIndex = Mathf.CeilToInt((MapUtils.MapVerticalSize - presetRow.Length) / 2f); 
-        Array.Fill(lastRow, 1);
+        presetRowIndex = Mathf.CeilToInt((MapUtils.MapVerticalSize - presetRow.Length) / 2f);
+        for (int i = 0; i < lastRow.Length; i++)
+        {
+            lastRow[i] = 1;
+        }
     }
 
-    private void GenerateMap()
+    private List<int[]> GenerateMap()
     {
         int reachableMapSize = MapUtils.ColumnSize - 1;
         CheckForData(0);
@@ -104,7 +101,7 @@ public class MapGenerator : MonoBehaviour
 
         map.Insert(0, verticalPortals);
         map.Add(verticalPortals);
-        mapDrawer.DrawMap(map);
+        return map;
     }
     
     private void CheckForData(int row)
@@ -163,7 +160,7 @@ public class MapGenerator : MonoBehaviour
         for (int i = 0; i < MapUtils.ColumnSize - 1; i++)
         {
             debugh = i;
-            if (MapUtils.MapStatus(currentRow, i) == -1 || MapUtils.MapStatus(currentRow, i) == 1)
+            if (MapUtils.GetRowStatus(currentRow, i) == -1 || MapUtils.GetRowStatus(currentRow, i) == 1)
             {
                 continue;
             }
@@ -190,7 +187,7 @@ public class MapGenerator : MonoBehaviour
 
         if (MapRules.CanPlaceBlock(lastRow, currentRow, hIndex))
         {
-            if (Random.value > randomValue)
+            if (Random.value > MapUtils.DotChanceValue)
             {
                 currentRow[hIndex] = 1;
                 return;
@@ -236,7 +233,7 @@ public class MapGenerator : MonoBehaviour
                 if (MapRules.MustPlaceBlock(lastRow, currentRow, i) == false)
                 {
                     currentRow[i] = -1;
-                    if (Random.value > randomValue)
+                    if (Random.value > MapUtils.DotChanceValue)
                     {
                         isolatedIds.Remove(lastRowConnectivity[i]);
                     }
@@ -294,15 +291,15 @@ public class MapGenerator : MonoBehaviour
         for (int index = 0; index < currentRow.Length; index++)
         {
             Debug.Log("v h " + debugv + " " + index + " ### " + "check for next row hint");
-            if (MapUtils.MapStatus(currentRow, index) == 1)
+            if (MapUtils.GetRowStatus(currentRow, index) == 1)
             {
                 Debug.Log("it is block");
                 continue;
             }
             currentRowDots.Add(index);
-            if (MapUtils.MapStatus(currentRow, index, -1) + MapUtils.MapStatus(currentRow, index, 1) + lastRow[index] < 0)
+            if (MapUtils.GetRowStatus(currentRow, index, -1) + MapUtils.GetRowStatus(currentRow, index, 1) + lastRow[index] < 0)
             {
-                Debug.Log("it has more way to go: " + (MapUtils.MapStatus(currentRow, index, -1) + MapUtils.MapStatus(currentRow, index, 1) + lastRow[index] ));
+                Debug.Log("it has more way to go: " + (MapUtils.GetRowStatus(currentRow, index, -1) + MapUtils.GetRowStatus(currentRow, index, 1) + lastRow[index] ));
                 continue;
             }
 
@@ -329,7 +326,7 @@ public class MapGenerator : MonoBehaviour
     {
         for (int index = currentRow.Length - 2; index >= 0; index--)
         {
-            if (MapUtils.MapStatus(currentRow, index) == 1)
+            if (MapUtils.GetRowStatus(currentRow, index) == 1)
             {
                 continue;
             }
@@ -346,17 +343,17 @@ public class MapGenerator : MonoBehaviour
         //todo: SOOO KASSSSSSIIIIFFF
         for (int index = currentRow.Length - 2; index >= 0; index--)
         {
-            Debug.Log(" Be Man Mavad Bedahid:: " + MapUtils.MapStatus(currentRow, index, -1) + "  " + MapUtils.MapStatus(currentRow, index, 1) + "  %% " +
-                      MapUtils.MapStatus(currentRow, index, -2));
-            Debug.Log(index + "  -->> " + (MapUtils.CalculateIndex(index, -1)) + " :: " + MapUtils.MapStatus(currentRow, index, -1));
-            if (MapUtils.MapStatus(currentRow, index) == 1)
+            Debug.Log(" Be Man Mavad Bedahid:: " + MapUtils.GetRowStatus(currentRow, index, -1) + "  " + MapUtils.GetRowStatus(currentRow, index, 1) + "  %% " +
+                      MapUtils.GetRowStatus(currentRow, index, -2));
+            Debug.Log(index + "  -->> " + (MapUtils.CalculateIndex(index, -1)) + " :: " + MapUtils.GetRowStatus(currentRow, index, -1));
+            if (MapUtils.GetRowStatus(currentRow, index) == 1)
             {
                 continue;
             }
             
-            if (MapUtils.MapStatus(currentRow, index, -1) == -1 &&
-                MapUtils.MapStatus(currentRow, index, 1) == 1 &&
-                MapUtils.MapStatus(currentRow, index, -2) == 1)
+            if (MapUtils.GetRowStatus(currentRow, index, -1) == -1 &&
+                MapUtils.GetRowStatus(currentRow, index, 1) == 1 &&
+                MapUtils.GetRowStatus(currentRow, index, -2) == 1)
             {
                 Debug.Log("%%%%%%%  double: " + index);
                 if (lastRow[index] != -1)
@@ -377,11 +374,11 @@ public class MapGenerator : MonoBehaviour
         for (int i = 0; i < currentRow.Length; i++)
         {   
             // Debug.Log("i -->> " + MapUtils.MapStatus(map, i) + " ::: " + MapUtils.MapStatus(map, i, -1));
-            if (MapUtils.MapStatus(currentRow, i) == -1 && MapUtils.MapStatus(currentRow, i, 1) == 1)
+            if (MapUtils.GetRowStatus(currentRow, i) == -1 && MapUtils.GetRowStatus(currentRow, i, 1) == 1)
                 disjointDots++;
         }
 
-        if (disjointDots <= 1 && MapUtils.MapStatus(currentRow, 0) == -1)
+        if (disjointDots <= 1 && MapUtils.GetRowStatus(currentRow, 0) == -1)
         {
             List<int> firstRowPortalCandidates = new List<int>();
             for (int i = 0; i < firstRow.Length; i++)
@@ -392,12 +389,15 @@ public class MapGenerator : MonoBehaviour
                 }
             }
             int portalIndex = firstRowPortalCandidates[Random.Range(0, firstRowPortalCandidates.Count)];
-            Array.Fill(rowHint, 1);
+            for (int i = 0; i < rowHint.Length; i++)
+            {
+                rowHint[i] = 1;
+            }
             AddVerticalPortals(portalIndex);
             for (int i = portalIndex; i >= 0; i--)
             {
                 rowHint[i] = -1;
-                if (MapUtils.MapStatus(currentRow, i) == -1)
+                if (MapUtils.GetRowStatus(currentRow, i) == -1)
                 {
                     return;
                 }
@@ -408,36 +408,36 @@ public class MapGenerator : MonoBehaviour
         bool secondDots = false;
         for (int index = currentRow.Length - 2; index >= 0; index--)
         {
-            if (MapUtils.MapStatus(currentRow, index) == 1 && (firstDots == false || rowHint[MapUtils.CalculateIndex(index, 1)] == 1))
+            if (MapUtils.GetRowStatus(currentRow, index) == 1 && (firstDots == false || rowHint[MapUtils.CalculateIndex(index, 1)] == 1))
             {
                 Debug.Log(index + "   A");
                 rowHint[index] = 1;
                 continue;
             }
 
-            if (MapUtils.MapStatus(currentRow, index) == 1 && (firstDots))
+            if (MapUtils.GetRowStatus(currentRow, index) == 1 && (firstDots))
             {
                 Debug.Log(index + "   B");
                 rowHint[index] = -1;
-                if (firstRow[index] == -1 && Random.value > randomValue)
+                if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
                     AddVerticalPortals(index);
                 }
                 continue;
             }
 
-            if (MapUtils.MapStatus(currentRow, index) == -1 && MapUtils.MapStatus(currentRow, index, -1) == -1 && firstDots == false)
+            if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == -1 && firstDots == false)
             {
                 Debug.Log(index + "   C");
                 rowHint[index] = 1;
                 continue;
             }
             
-            if (MapUtils.MapStatus(currentRow, index) == -1 && MapUtils.MapStatus(currentRow, index, -1) == -1 && firstDots)
+            if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == -1 && firstDots)
             {
                 Debug.Log(index + "   D");
                 rowHint[index] = -1;
-                if (firstRow[index] == -1 && Random.value > randomValue)
+                if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
                     AddVerticalPortals(index);
                 }
@@ -446,22 +446,22 @@ public class MapGenerator : MonoBehaviour
                 continue;
             }
             
-            if (MapUtils.MapStatus(currentRow, index) == -1 && MapUtils.MapStatus(currentRow, index, -1) == 1 && secondDots == false)
+            if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == 1 && secondDots == false)
             {
                 Debug.Log(index + "   E");
                 firstDots = true;
                 rowHint[index] = -1;
-                if (firstRow[index] == -1 && Random.value > randomValue)
+                if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
                     AddVerticalPortals(index);
                 }
                 continue;
             }
             
-            if (MapUtils.MapStatus(currentRow, index) == -1 && MapUtils.MapStatus(currentRow, index, -1) == 1 && secondDots)
+            if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == 1 && secondDots)
             {
                 Debug.Log(index + "   F:   rowHint[index]: " + rowHint[index]);
-                if (Random.value > randomValue && rowHint[index] != -1)
+                if (Random.value > MapUtils.DotChanceValue && rowHint[index] != -1)
                 {
                     Debug.Log("FF");
                     firstDots = false;
@@ -473,7 +473,7 @@ public class MapGenerator : MonoBehaviour
                 firstDots = true;
                 secondDots = false;
                 rowHint[index] = -1;
-                if (firstRow[index] == -1 && Random.value > randomValue)
+                if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
                     AddVerticalPortals(index);
                 }
@@ -502,5 +502,5 @@ public class MapGenerator : MonoBehaviour
             verticalPortals[hIndex] = -2;
         }
     }
-
+    
 }

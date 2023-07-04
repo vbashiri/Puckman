@@ -1,19 +1,20 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class MapDrawer : MonoBehaviour
 {
-    [SerializeField] private GameObject cube;
-    private Transform playground;
+    private GameObject cube;
+
+    private void Awake()
+    {
+        cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cube.SetActive(false);
+    }
 
     public void DrawMap(List<int[]> map)
     {
-        if (playground != null)
-        {
-            Destroy(playground.gameObject);
-        }
-        playground = Instantiate(new GameObject(), transform).GetComponent<Transform>();
 
         for (int j = 0; j < map.Count; j++)
         {
@@ -55,9 +56,9 @@ public class MapDrawer : MonoBehaviour
         }
         
         Instantiate(cube,
-            new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1 - 3),
+            new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1),
             Quaternion.identity,
-            playground);
+            transform).SetActive(true);
 
         if (hIndex == 0 && MapUtils.IsMapEvenWidth == false)
         {
@@ -65,9 +66,9 @@ public class MapDrawer : MonoBehaviour
         }
         
         Instantiate(cube,
-            new Vector3(hIndex * -1 - offset, 0, vIndex  * - 1 - 3),
+            new Vector3(hIndex * -1 - offset, 0, vIndex  * - 1),
             Quaternion.identity,
-            playground);
+            transform).SetActive(true);
         
     }
 

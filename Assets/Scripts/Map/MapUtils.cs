@@ -24,6 +24,8 @@ public class MapUtils
 
     public static int MapHorizontalSize => MapData.horizontalSize;
 
+    public static float DotChanceValue => MapData.placeDotsChance;
+
     public static int ColumnSize => Mathf.CeilToInt((MapHorizontalSize + 2f) / 2f);
     
     public static bool IsMapEvenWidth => MapHorizontalSize % 2 == 0;
@@ -49,9 +51,9 @@ public class MapUtils
         return ColumnSize - 1;
     }
 
-    public static int MapStatus(int[] map, int index, int distance = 0)
+    public static int GetRowStatus(int[] rowStatuses, int index, int distance = 0)
     {
-        return map[CalculateIndex(index, distance)];
+        return rowStatuses[CalculateIndex(index, distance)];
     }
 
 }
