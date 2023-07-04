@@ -52,7 +52,7 @@ public class MapRules
             return false;
         }
 
-        //Rule: if there is block left side and left blocks don't have a way up (make a U turn)
+        //Rule: Don't block if there is block left side and left blocks don't have a way up (make a U turn)
         if ((MapUtils.MapStatus(currentRow, index, -3) == 1 ||
              MapUtils.MapStatus(currentRow, index, -2) == 1) &&
             ((MapUtils.MapStatus(currentRow, index, -2) == -1 &&
@@ -63,7 +63,7 @@ public class MapRules
             return false;
         }
         
-        //Rule: if there is block right side and right blocks don't have a way up (make a U turn)
+        //Rule: Don't block if there is block right side and right blocks don't have a way up (make a U turn)
         if ((MapUtils.MapStatus(currentRow, index, 3) == 1 ||
              MapUtils.MapStatus(currentRow, index, 2) == 1) &&
             ((MapUtils.MapStatus(currentRow, index, 2) == -1 &&
@@ -75,6 +75,17 @@ public class MapRules
         }
         
 
+        return true;
+    }
+
+    public static bool CanPlaceVerticalPortal(int[] portalRow, int index)
+    {
+        //Rule: Don't make portals next to each other
+        if (MapUtils.MapStatus(portalRow, index, -1) == -2 ||
+            MapUtils.MapStatus(portalRow, index, 1) == -2)
+        {
+            return false;
+        }
         return true;
     }
 
