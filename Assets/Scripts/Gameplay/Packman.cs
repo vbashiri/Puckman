@@ -37,7 +37,45 @@ public class Packman : MonoBehaviour
     
     private void Update()
     {
+        if (Input.GetKey("up"))
+        {
+            if (character.CanMove(Character.MoveDirection.up) ||
+                (isMovingHorizontally == false && character.IsCentered() == false))
+            {
+                isMovingHorizontally = false;
+                character.Move(Character.MoveDirection.up);
+            }
+        }
+
+        if (Input.GetKey("down"))
+        {
+            if (character.CanMove(Character.MoveDirection.down) ||
+                (isMovingHorizontally == false && character.IsCentered() == false))
+            {
+                isMovingHorizontally = false;
+                character.Move(Character.MoveDirection.down);
+            }
+        }
         
+        if (Input.GetKey("right"))
+        {
+            if(character.CanMove(Character.MoveDirection.right) ||
+               (isMovingHorizontally && character.IsCentered() == false))
+            {
+                isMovingHorizontally = true;
+                character.Move(Character.MoveDirection.right);
+            }
+        }
+
+        if (Input.GetKey("left"))
+        {
+            if(character.CanMove(Character.MoveDirection.left) ||
+                (isMovingHorizontally && character.IsCentered() == false))
+            {
+                isMovingHorizontally = true;
+                character.Move(Character.MoveDirection.left);
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)

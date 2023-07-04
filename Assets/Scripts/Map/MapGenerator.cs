@@ -106,6 +106,10 @@ public class MapGenerator
     
     private void CheckForData(int row)
     {
+        if (Mathf.Min(MapUtils.MapHorizontalSize, MapUtils.MapVerticalSize) < 7)
+        {
+            return;
+        }
         int rowIndex = row - presetRowIndex;
         if (rowIndex < presetRow.Length && rowIndex >= 0)
         {
@@ -387,6 +391,11 @@ public class MapGenerator
                 {
                     firstRowPortalCandidates.Add(i);
                 }
+            }
+
+            if (firstRowPortalCandidates.Count <= 0)
+            {
+                return;
             }
             int portalIndex = firstRowPortalCandidates[Random.Range(0, firstRowPortalCandidates.Count)];
             for (int i = 0; i < rowHint.Length; i++)
