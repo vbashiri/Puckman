@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,11 @@ public class Packman : MonoBehaviour
     public Packman Setup(List<int[]> map)
     {
         gameObject.layer = LayerMask.NameToLayer("Packman");
+        var newMaterial = new Material(Shader.Find("Standard"));
+        newMaterial.color = new Color(1f, 0.8f, 0.1f);
+        gameObject.GetComponent<MeshRenderer>().material = newMaterial;
+        gameObject.AddComponent<Rigidbody>().isKinematic = true;
+        
         int hIndex = 0;
         for (int i = 0; i < map[0].Length; i++)
         {
@@ -26,113 +32,23 @@ public class Packman : MonoBehaviour
             .Setup(map, new Vector3(hIndex + offset, 0f, -(map.Count / 4 * 3)));
         isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
                                currentDirection == Character.MoveDirection.right;
-        Debug.LogError("AAAADSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        Navigate();
         return this;
     }
     
-    private void Navigate()
+    private void Update()
     {
-
-        isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
-                               currentDirection == Character.MoveDirection.right;
-        Debug.Log("Can't Move " + currentDirection);
-        Debug.Log(character.CanMove(Character.MoveDirection.up) + " " +
-                  character.CanMove(Character.MoveDirection.down) + " " +
-                  character.CanMove(Character.MoveDirection.right) + " " +
-                  character.CanMove(Character.MoveDirection.left)+ " ");
         
+    }
 
-        if (isMovingHorizontally && character.CanMove(Character.MoveDirection.up))
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Dot"))
         {
-            Debug.Log("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
-            if (character.CanMove(Character.MoveDirection.down) == false &&
-                character.CanMove(currentDirection) == false)
-            {
-                currentDirection = Character.MoveDirection.up;
-                character.Move(Character.MoveDirection.up, Navigate);
-                return;
-            }
-            if (Random.value > 0.5f)
-            {
-                currentDirection = Character.MoveDirection.up;
-                character.Move(Character.MoveDirection.up, Navigate);
-                return;
-            }
+            Destroy(other.gameObject);
         }
-
-        if (isMovingHorizontally && character.CanMove(Character.MoveDirection.down))
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Ghost"))
         {
-            Debug.Log("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            if (character.CanMove(currentDirection) == false)
-            {
-                currentDirection = Character.MoveDirection.down;
-                character.Move(Character.MoveDirection.down, Navigate);
-                return;
-            }
-            if (Random.value > 0.5f)
-            {
-                currentDirection = Character.MoveDirection.down;
-                character.Move(Character.MoveDirection.down, Navigate);
-                return;
-            }
-        }
-        if (isMovingHorizontally == false && character.CanMove(Character.MoveDirection.right))
-        {
-            Debug.Log("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
-            if (character.CanMove(Character.MoveDirection.left) == false &&
-                character.CanMove(currentDirection) == false)
-            {
-                currentDirection = Character.MoveDirection.right;
-                character.Move(Character.MoveDirection.right, Navigate);
-                return;
-            }
-            if (Random.value > 0.5f)
-            {
-                currentDirection = Character.MoveDirection.right;
-                character.Move(Character.MoveDirection.right, Navigate);
-                return;
-            }
-        }
-        
-        if (isMovingHorizontally == false && character.CanMove(Character.MoveDirection.left))
-        {
-            Debug.Log("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
-            if (character.CanMove(currentDirection) == false)
-            {
-                currentDirection = Character.MoveDirection.left;
-                character.Move(Character.MoveDirection.left, Navigate);
-                return;
-            }
-            if (Random.value > 0.5f)
-            {
-
-                currentDirection = Character.MoveDirection.left;
-                character.Move(Character.MoveDirection.left, Navigate);
-                return;
-            }
-        }
-
-        if (character.CanMove(currentDirection))
-        {
-            character.Move(currentDirection, Navigate);
-        }
-        else
-        {
-            if (isMovingHorizontally)
-            {
-                currentDirection = currentDirection == Character.MoveDirection.right ?
-                    Character.MoveDirection.left :
-                    Character.MoveDirection.right;
-                character.Move(currentDirection, Navigate);
-            }
-            else
-            {
-                currentDirection = currentDirection == Character.MoveDirection.up ?
-                    Character.MoveDirection.down :
-                    Character.MoveDirection.up;
-                character.Move(currentDirection, Navigate);
-            }
+            Game.GameOver();
         }
     }
 }

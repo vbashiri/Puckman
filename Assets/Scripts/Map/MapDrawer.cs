@@ -6,10 +6,25 @@ using UnityEngine;
 public class MapDrawer : MonoBehaviour
 {
     private GameObject cube;
+    private GameObject dot;
 
     private void Awake()
     {
         cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cube.transform.parent = transform;
+        var newMaterial = new Material(Shader.Find("Standard"));
+        newMaterial.color = Color.blue;
+        cube.GetComponent<MeshRenderer>().material = newMaterial;
+        cube.SetActive(false);
+        
+        dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        dot.transform.parent = transform;
+        newMaterial = new Material(Shader.Find("Standard"));
+        newMaterial.color = Color.white;
+        dot.GetComponent<MeshRenderer>().material = newMaterial;
+        dot.transform.localScale = 0.25f * Vector3.one;
+        dot.layer = LayerMask.NameToLayer("Dot");
+        dot.GetComponent<Collider>().isTrigger = true;
         cube.SetActive(false);
     }
 
@@ -29,7 +44,10 @@ public class MapDrawer : MonoBehaviour
                 }
                 else if (row[i] == -1)
                 {
-                    PlaceDot(i, j);
+                    PlaceDot(i,
+                        j,
+                        MapUtils.GetRowStatus(row, i, -1) == -1,
+                        j > 0 ? MapUtils.GetRowStatus(map[j - 1], i) == -1 : false);
                 }
                 else if (row[i] == -2)
                 {
@@ -72,10 +90,61 @@ public class MapDrawer : MonoBehaviour
         
     }
 
-    private void PlaceDot(int hIndex, int vIndex)
+    private void PlaceDot(int hIndex, int vIndex, bool hasLeftDot, bool hasTopDot)
     {
         
-        Debug.Log("v h " + vIndex + " " + hIndex + " ### " + "Place Dot");
+        var offset = 0f;
+        if (MapUtils.IsMapEvenWidth)
+        {
+            offset = 0.5f;
+        }
+
+        Instantiate(dot,
+            new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1),
+            Quaternion.identity,
+            transform).SetActive(true);
+
+        if (hasTopDot)
+        {
+            Instantiate(dot,
+                new Vector3(hIndex * 1 + offset, 0, vIndex  * - 1 + 0.5f),
+                Quaternion.identity,
+                transform).SetActive(true);
+        }
+
+        if (hasLeftDot)
+        {
+            Instantiate(dot,
+                new Vector3(hIndex * 1 + offset - 0.5f, 0, vIndex  * - 1),
+                Quaternion.identity,
+                transform).SetActive(true);
+        }
+
+        if (hIndex == 0 && MapUtils.IsMapEvenWidth == false)
+        {
+            return;
+        }
+        
+        if (hasTopDot)
+        {
+            Instantiate(dot,
+                new Vector3(hIndex * -1 - offset, 0, vIndex  * - 1 + 0.5f),
+                Quaternion.identity,
+                transform).SetActive(true);
+        }
+        
+        if (hasLeftDot)
+        {
+            Instantiate(dot,
+                new Vector3(hIndex * -1 - offset + 0.5f, 0, vIndex  * - 1),
+                Quaternion.identity,
+                transform).SetActive(true);
+        }
+        
+        Instantiate(dot,
+            new Vector3(hIndex * -1 - offset, 0, vIndex  * - 1),
+            Quaternion.identity,
+            transform).SetActive(true);
     }
 
     private void PlaceVerticalPortal(int hIndex)

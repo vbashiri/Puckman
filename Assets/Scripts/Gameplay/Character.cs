@@ -30,7 +30,6 @@ public class Character : MonoBehaviour
 
     public void Move(MoveDirection moveDirection)
     {
-        Debug.Log("###" + moveDirection);
         switch (moveDirection)
         {
             case MoveDirection.up:

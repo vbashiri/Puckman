@@ -11,9 +11,14 @@ public class Ghost : MonoBehaviour
     private bool isMovingHorizontally;
     private Character.MoveDirection currentDirection;
     
-    public Ghost Setup(Transform packman, List<int[]> map)
+    public Ghost Setup(Transform packman, List<int[]> map, Color color)
     {
         gameObject.layer = LayerMask.NameToLayer("Ghost");
+        gameObject.GetComponent<Collider>().isTrigger = true;
+        
+        var newMaterial = new Material(Shader.Find("Standard"));
+        newMaterial.color = color;
+        gameObject.GetComponent<MeshRenderer>().material = newMaterial;
         this.packman = packman;
         character = gameObject.AddComponent<Character>()
             .Setup(map, new Vector3(0f, 0f, -map.Count / 2f));
