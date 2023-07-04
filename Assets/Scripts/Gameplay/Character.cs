@@ -33,11 +33,11 @@ public class Character : MonoBehaviour
         switch (moveDirection)
         {
             case MoveDirection.up:
-                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x), 0,
+                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x * 2) / 2f, 0,
                     transform.position.z + SPEED * Time.deltaTime);
                 break;
             case MoveDirection.down:
-                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x), 0,
+                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x * 2) / 2f, 0,
                     transform.position.z - SPEED * Time.deltaTime);
                 break;
             case MoveDirection.right:
@@ -65,11 +65,22 @@ public class Character : MonoBehaviour
         yield return null;
         Vector2Int initialPosition = GetCurrentLocation();
         Vector2Int currentPosition = initialPosition;
+        bool isRightSide = transform.position.x > 0f;
         while (initialPosition.x == currentPosition.x && initialPosition.y == currentPosition.y)
         {
             Move(moveDirection);
             if (IsCentered())
+            {
+                if (MapUtils.IsMapEvenWidth)
+                {
+                    bool isLeftSide = transform.position.x < 0f;
+                    if ((isLeftSide && isRightSide) || ((isLeftSide || isRightSide) == false))
+                    {
+                        break;
+                    }
+                }
                 currentPosition = GetCurrentLocation();
+            }
             yield return null;
         }
         callBack?.Invoke();
@@ -84,7 +95,8 @@ public class Character : MonoBehaviour
     public bool IsCentered()
     {
         var currentLocation = GetCurrentLocation();
-        if (Mathf.Abs(Mathf.Abs(transform.position.x) - currentLocation.x) > 0.1f ||
+
+        if (Mathf.Abs(Mathf.Abs(transform.position.x) - currentLocation.x - offset) > 0.1f ||
             Mathf.Abs(-transform.position.z - currentLocation.y) > 0.1f)
         {
             return false;
@@ -95,8 +107,8 @@ public class Character : MonoBehaviour
 
     public bool CanMove(MoveDirection moveDirection)
     {
-        var currentLocation = new Vector2Int( Mathf.RoundToInt(Mathf.Abs(transform.position.x) - offset),
-            Mathf.RoundToInt(Mathf.Abs(transform.position.z)));
+        var currentLocation = GetCurrentLocation();
+
 
         int mirrorFactor = Mathf.RoundToInt(transform.position.x - offset) < 0 ? -1 : 1;
         currentLocation.x = currentLocation.x * mirrorFactor;

@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 723c4ef4045888944ade1921413bf758, type: 3}
   m_Name: MapConfig
   m_EditorClassIdentifier: 
-  horizontalSize: 15
-  verticalSize: 30
-  placeDotsChance: 0.31
+  horizontalSize: 10
+  verticalSize: 10
+  placeDotsChance: 0.4

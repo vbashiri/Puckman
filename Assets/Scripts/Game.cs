@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Game : MonoBehaviour
 {
     [SerializeField] private Button button;
-    private int GHOST_COUNT = 4;
+    private int GHOST_COUNT = 1;
     private Transform playground;
 
     void Start()
