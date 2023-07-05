@@ -18,6 +18,7 @@ public class Character : MonoBehaviour
     private float offset;
     private List<int[]> map;
     private Coroutine moveRoutine;
+    private float correctHorizontal;
 
 
     public Character Setup(List<int[]> map, Vector3 initialPosition)
@@ -30,14 +31,22 @@ public class Character : MonoBehaviour
 
     public void Move(MoveDirection moveDirection)
     {
+        if (offset > 0)
+        {
+            correctHorizontal = Mathf.FloorToInt(transform.position.x) + 0.5f;
+        }
+        else
+        {
+            correctHorizontal = Mathf.RoundToInt(transform.position.x);
+        }
         switch (moveDirection)
         {
             case MoveDirection.up:
-                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x * 2) / 2f, 0,
+                transform.position = new Vector3(correctHorizontal, 0,
                     transform.position.z + SPEED * Time.deltaTime);
                 break;
             case MoveDirection.down:
-                transform.position = new Vector3(Mathf.RoundToInt(transform.position.x * 2) / 2f, 0,
+                transform.position = new Vector3(correctHorizontal, 0,
                     transform.position.z - SPEED * Time.deltaTime);
                 break;
             case MoveDirection.right:
@@ -86,6 +95,7 @@ public class Character : MonoBehaviour
         callBack?.Invoke();
     }
 
+    
     private Vector2Int GetCurrentLocation()
     {
         return new Vector2Int( Mathf.RoundToInt(Mathf.Abs(transform.position.x) - offset),

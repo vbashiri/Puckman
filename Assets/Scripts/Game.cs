@@ -6,12 +6,13 @@ using UnityEngine.UI;
 public class Game : MonoBehaviour
 {
     [SerializeField] private Button button;
-    private int GHOST_COUNT = 1;
+    private int GHOST_COUNT = 4;
     private Transform playground;
+    private System.Action startListener;
 
     void Start()
     {
-        game = this;
+        gameManager = this;
         button.onClick.AddListener(SetupGame);
         SetupGame();
         
@@ -29,15 +30,16 @@ public class Game : MonoBehaviour
         
         List<int[]> map = SetupMap(playground);
         
-        Packman packman = GameObject.CreatePrimitive(PrimitiveType.Sphere).AddComponent<Packman>().Setup(map);
-        packman.transform.parent = playground;
+        
+        Pacman pacman = GameObject.CreatePrimitive(PrimitiveType.Sphere).AddComponent<Pacman>().Setup(map);
+        pacman.transform.parent = playground;
         
         Color[] colors = new[] {Color.magenta, Color.red, Color.cyan, new Color(0.7f, 0.2f, 0.9f)};
         for (int i = 0; i < GHOST_COUNT; i++)
         {
             Ghost ghost = GameObject.CreatePrimitive(PrimitiveType.Sphere)
                 .AddComponent<Ghost>()
-                .Setup(packman.transform, map, colors[i % colors.Length]);
+                .Setup(pacman.transform, map, colors[i % colors.Length]);
             ghost.transform.parent = playground;
         }
     }
@@ -52,15 +54,43 @@ public class Game : MonoBehaviour
         return map;
     }
 
+    //////////////////////////////////////////////////////
+    /// <summary>
+    /// Statics
+    /// </summary>
+    //////////////////////////////////////////////////////
 
-    private static Game game;
+    public static bool isGameStarted;
+    private static Game gameManager;
+
+    public static Game GameManager
+    {
+        get
+        {
+            if (gameManager == null)
+            {
+                gameManager = FindObjectOfType<Game>();
+            }
+
+            return gameManager;
+        }
+    }
     public static void GameOver()
     {
-        if (game == null)
-        {
-            game = FindObjectOfType<Game>();
-        }
-        game.SetupGame();
+        isGameStarted = false;
+        GameManager.startListener = null;
+        GameManager.SetupGame();
+    }
+
+    public static void StartGame()
+    {
+        isGameStarted = true;
+        GameManager.startListener?.Invoke();
+    }
+
+    public static void AddStartGameListener(System.Action action)
+    {
+        GameManager.startListener += action;
     }
 
 }

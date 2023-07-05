@@ -3,15 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Packman : MonoBehaviour
+public class Pacman : MonoBehaviour
 {
     private Character character;
     private bool isMovingHorizontally;
     private Character.MoveDirection currentDirection;
     
-    public Packman Setup(List<int[]> map)
+    public Pacman Setup(List<int[]> map)
     {
-        gameObject.layer = LayerMask.NameToLayer("Packman");
+        gameObject.layer = LayerMask.NameToLayer("Pacman");
         var newMaterial = new Material(Shader.Find("Standard"));
         newMaterial.color = new Color(1f, 0.8f, 0.1f);
         gameObject.GetComponent<MeshRenderer>().material = newMaterial;
@@ -32,49 +32,73 @@ public class Packman : MonoBehaviour
             .Setup(map, new Vector3(hIndex + offset, 0f, -(map.Count / 4 * 3)));
         isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
                                currentDirection == Character.MoveDirection.right;
+        
         return this;
     }
     
     private void Update()
     {
+        if (Game.isGameStarted == false && Input.anyKey)
+        {
+            Game.StartGame();
+        }
+
+        if (Game.isGameStarted == false)
+        {
+            return;
+        }
+
         if (Input.GetKey("up"))
         {
-            if (character.CanMove(Character.MoveDirection.up) ||
+            if ((character.CanMove(Character.MoveDirection.up) && character.IsCentered()) ||
                 (isMovingHorizontally == false && character.IsCentered() == false))
             {
+                currentDirection = Character.MoveDirection.up;
                 isMovingHorizontally = false;
                 character.Move(Character.MoveDirection.up);
+                return;
             }
         }
 
         if (Input.GetKey("down"))
         {
-            if (character.CanMove(Character.MoveDirection.down) ||
+            if ((character.CanMove(Character.MoveDirection.down) && character.IsCentered()) ||
                 (isMovingHorizontally == false && character.IsCentered() == false))
             {
+                currentDirection = Character.MoveDirection.down;
                 isMovingHorizontally = false;
                 character.Move(Character.MoveDirection.down);
+                return;
             }
         }
         
         if (Input.GetKey("right"))
         {
-            if(character.CanMove(Character.MoveDirection.right) ||
-               (isMovingHorizontally && character.IsCentered() == false))
+            if ((character.CanMove(Character.MoveDirection.right) && character.IsCentered()) ||
+                (isMovingHorizontally && character.IsCentered() == false))
             {
+                currentDirection = Character.MoveDirection.right;
                 isMovingHorizontally = true;
                 character.Move(Character.MoveDirection.right);
+                return;
             }
         }
 
         if (Input.GetKey("left"))
         {
-            if(character.CanMove(Character.MoveDirection.left) ||
+            if ((character.CanMove(Character.MoveDirection.left) && character.IsCentered()) ||
                 (isMovingHorizontally && character.IsCentered() == false))
             {
+                currentDirection = Character.MoveDirection.left;
                 isMovingHorizontally = true;
                 character.Move(Character.MoveDirection.left);
+                return;
             }
+        }
+
+        if (character.CanMove(currentDirection) || character.IsCentered() == false)
+        {
+            character.Move(currentDirection);
         }
     }
 

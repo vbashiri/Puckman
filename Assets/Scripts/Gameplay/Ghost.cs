@@ -6,12 +6,12 @@ using UnityEngine;
 public class Ghost : MonoBehaviour
 {
     private const float HEURISTIC_FACTOR = 0.2f;
-    private Transform packman;
+    private Transform pacman;
     private Character character;
     private bool isMovingHorizontally;
     private Character.MoveDirection currentDirection;
     
-    public Ghost Setup(Transform packman, List<int[]> map, Color color)
+    public Ghost Setup(Transform pacman, List<int[]> map, Color color)
     {
         gameObject.layer = LayerMask.NameToLayer("Ghost");
         gameObject.GetComponent<Collider>().isTrigger = true;
@@ -19,13 +19,13 @@ public class Ghost : MonoBehaviour
         var newMaterial = new Material(Shader.Find("Standard"));
         newMaterial.color = color;
         gameObject.GetComponent<MeshRenderer>().material = newMaterial;
-        this.packman = packman;
+        this.pacman = pacman;
         float offset = MapUtils.IsMapEvenWidth ? 0.5f : 0f;
         character = gameObject.AddComponent<Character>()
             .Setup(map, new Vector3(0f + offset, 0f, -map.Count / 2f));
         isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
                                currentDirection == Character.MoveDirection.right;
-        Navigate();
+        Game.AddStartGameListener(Navigate);
         return this;
     }
     
@@ -34,10 +34,10 @@ public class Ghost : MonoBehaviour
         isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
                                currentDirection == Character.MoveDirection.right;
 
-        var packmanPosition = packman.position;
+        var pacmanPosition = pacman.position;
         var ghostPosition = transform.position;
-        var verticalHeuristic = packmanPosition.z > ghostPosition.z ? HEURISTIC_FACTOR : -HEURISTIC_FACTOR;
-        var horizontalHeuristic = packmanPosition.x > ghostPosition.x ? HEURISTIC_FACTOR : -HEURISTIC_FACTOR;
+        var verticalHeuristic = pacmanPosition.z > ghostPosition.z ? HEURISTIC_FACTOR : -HEURISTIC_FACTOR;
+        var horizontalHeuristic = pacmanPosition.x > ghostPosition.x ? HEURISTIC_FACTOR : -HEURISTIC_FACTOR;
         
         if (isMovingHorizontally && character.CanMove(Character.MoveDirection.up))
         {
