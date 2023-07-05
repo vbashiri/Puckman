@@ -39,10 +39,10 @@ public class Pacman : MonoBehaviour
     private void Update()
     {
         if (Game.isGameStarted == false &&
-            (Input.GetKey("up")) ||
+            (Input.GetKey("up") ||
             Input.GetKey("down") ||
             Input.GetKey("left") ||
-            Input.GetKey("right"))
+            Input.GetKey("right")))
         {
             Game.StartGame();
         }

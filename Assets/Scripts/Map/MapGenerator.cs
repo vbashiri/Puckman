@@ -150,7 +150,7 @@ public class MapGenerator
         {
             return;
         }
-        Debug.Log("Full block <------");
+
         List<int> canBeDots = new List<int>();
         for (int i = MapUtils.IsMapEvenWidth ? 1 : 0; i < currentRow.Length; i++)
         {
@@ -445,14 +445,12 @@ public class MapGenerator
         {
             if (MapUtils.GetRowStatus(currentRow, index) == 1 && (firstDots == false || rowHint[MapUtils.CalculateIndex(index, 1)] == 1))
             {
-                Debug.Log(index + "   A");
                 rowHint[index] = 1;
                 continue;
             }
 
             if (MapUtils.GetRowStatus(currentRow, index) == 1 && (firstDots))
             {
-                Debug.Log(index + "   B");
                 rowHint[index] = -1;
                 if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
@@ -463,14 +461,12 @@ public class MapGenerator
 
             if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == -1 && firstDots == false)
             {
-                Debug.Log(index + "   C");
                 rowHint[index] = 1;
                 continue;
             }
             
             if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == -1 && firstDots)
             {
-                Debug.Log(index + "   D");
                 rowHint[index] = -1;
                 if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
                 {
@@ -483,7 +479,6 @@ public class MapGenerator
             
             if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == 1 && secondDots == false)
             {
-                Debug.Log(index + "   E");
                 firstDots = true;
                 rowHint[index] = -1;
                 if (firstRow[index] == -1 && Random.value > MapUtils.DotChanceValue)
@@ -497,13 +492,11 @@ public class MapGenerator
             {
                 if (Random.value > MapUtils.DotChanceValue && rowHint[index] != -1)
                 {
-                    Debug.Log("FF");
                     firstDots = false;
                     secondDots = false;
                     rowHint[index] = 1;
                     continue;
                 }
-                Debug.Log("Not FF");
                 firstDots = true;
                 secondDots = false;
                 rowHint[index] = -1;

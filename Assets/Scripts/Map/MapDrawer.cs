@@ -149,6 +149,6 @@ public class MapDrawer : MonoBehaviour
 
     private void PlaceVerticalPortal(int hIndex)
     {
-        Debug.Log("Vertical Portals");
+        Debug.Log("I am a portal Ih Ih Ih Ih");
     }
 }
