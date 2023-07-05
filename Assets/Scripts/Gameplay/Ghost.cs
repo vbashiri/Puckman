@@ -22,7 +22,7 @@ public class Ghost : MonoBehaviour
         this.pacman = pacman;
         float offset = MapUtils.IsMapEvenWidth ? 0.5f : 0f;
         character = gameObject.AddComponent<Character>()
-            .Setup(map, new Vector3(0f + offset, 0f, -map.Count / 2f));
+            .Setup(map, new Vector3(0f + offset, 0f, -(map.Count + 1) / 2));
         isMovingHorizontally = currentDirection == Character.MoveDirection.left ||
                                currentDirection == Character.MoveDirection.right;
         Game.AddStartGameListener(Navigate);

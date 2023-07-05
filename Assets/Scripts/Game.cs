@@ -79,6 +79,8 @@ public class Game : MonoBehaviour
     {
         isGameStarted = false;
         GameManager.startListener = null;
+        if (Mathf.Min(MapUtils.MapHorizontalSize, MapUtils.MapVerticalSize) < 5)
+            return;
         GameManager.SetupGame();
     }
 
