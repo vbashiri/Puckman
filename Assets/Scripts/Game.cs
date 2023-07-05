@@ -13,8 +13,8 @@ public class Game : MonoBehaviour
     void Start()
     {
         gameManager = this;
-        button.onClick.AddListener(SetupGame);
-        SetupGame();
+        button.onClick.AddListener(GameOver);
+        GameOver();
         
     }
 

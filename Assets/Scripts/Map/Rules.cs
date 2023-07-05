@@ -33,6 +33,12 @@ public class MapRules
             return true;
         }
         
+        // Rule: Don't create square (Top Left) in EvenMaps
+        if (MapUtils.IsMapEvenWidth && (index == 0) && lastRow[index] == -1)
+        {
+            return true;
+        }
+        
         //Rule: Don't create square (Top Right)
         if (MapUtils.GetRowStatus(currentRow, index, 1) +
             lastRow[index] +

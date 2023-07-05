@@ -21,17 +21,17 @@ public class MapGenerator
     private int connectivityId;
 
     private int[][] presetRow = {
-        new int[] {1, 1, 0,  1, 1 },
-        new int[] { -2, -2, -2, -2, -1},
+        new int[] {1,0, 0,  1, 1 },
+        new int[] { -2, -2, -2, -2},
         new int[] { -2, 2, 2, -1},
         new int[] { -2, -2, 2, -1},
         new int[] { 2, 2, 2, -1},
-        new int[] { -1, -1, -1, -1, -1}
+        new int[] { -1, -1, -1, -1}
     };
     private int presetRowIndex;
 
-    private int debugv = 0;
-    private int debugh = 0;
+    // private int debugv = 0;
+    // private int debugh = 0;
 
 
     public List<int[]> SetupMap()
@@ -84,7 +84,13 @@ public class MapGenerator
                 GenerateCell(i);
             }
 
-
+            AddDotsToFullBlock();
+            
+            if (Mathf.Abs(j) == MapUtils.MapVerticalSize - 2)
+            {
+                EditOneToLastRow(j);
+            }
+            
             CheckConnectivity();
 
             Array.Clear(rowHint, 0, rowHint.Length);
@@ -92,10 +98,9 @@ public class MapGenerator
 
             if (Mathf.Abs(j) == MapUtils.MapVerticalSize - 2)
             {
-                EditOneToLastRow(j);
                 CalculateLastRow();
             }
-            
+
             ResetArrays(j);
         }
 
@@ -133,27 +138,43 @@ public class MapGenerator
     
     private void AddFirstRowDots()
     {
-        int firstRowMin = rowHint.Min();
-        if (firstRowMin >= 0)
+        if (rowHint.Min() >= 0)
         {
-            rowHint[Random.Range(0, rowHint.Length)] = -1; //Add at least one dot
+            rowHint[Random.Range(0, rowHint.Length - 1)] = -1; //Add at least one dot
         }
     }
+    
+    private void AddDotsToFullBlock()
+    {
+        if (currentRow.Min() < 0)
+        {
+            return;
+        }
+        Debug.Log("Full block <------");
+        List<int> canBeDots = new List<int>();
+        for (int i = MapUtils.IsMapEvenWidth ? 1 : 0; i < currentRow.Length; i++)
+        {
+            if (MapUtils.GetRowStatus(lastRow, i) == -1)
+            {
+                canBeDots.Add(i);
+            }
+        }
+        
+        currentRow[canBeDots[Random.Range(0, canBeDots.Count)]] = -1; //Add at least one dot
+    }
+
     
     private void DrawPredeterminedCells(int row)
     {
         for (int i = 0; i < MapUtils.ColumnSize - 1; i++)
         {
-            debugh = i;
             if (rowHint[i] == -1)
             {
-                Debug.Log("Draw Predetermind   Dot " + row  + " " + i);
                 currentRow[i] = -1;
             }
 
             if (rowHint[i] == 1)
             {
-                Debug.Log("Draw Predetermind Block " + row  + " " + i);
                 currentRow[i] = 1;
             }
         }
@@ -163,7 +184,6 @@ public class MapGenerator
     {
         for (int i = 0; i < MapUtils.ColumnSize - 1; i++)
         {
-            debugh = i;
             if (MapUtils.GetRowStatus(currentRow, i) == -1 || MapUtils.GetRowStatus(currentRow, i) == 1)
             {
                 continue;
@@ -230,6 +250,8 @@ public class MapGenerator
 
     private void ConnectCells(HashSet<int> isolatedIds)
     {
+        bool isConnected = false;
+        List<int> candidateBlocks = new List<int>();
         for (int i = 0; i < lastRowConnectivity.Length; i++)
         {
             if (isolatedIds.Contains(lastRowConnectivity[i]))
@@ -237,12 +259,25 @@ public class MapGenerator
                 if (MapRules.MustPlaceBlock(lastRow, currentRow, i) == false)
                 {
                     currentRow[i] = -1;
+                    connectivityStatus[i] = lastRowConnectivity[i];
+                    isConnected = true;
                     if (Random.value > MapUtils.DotChanceValue)
                     {
                         isolatedIds.Remove(lastRowConnectivity[i]);
                     }
                 }
+                else
+                {
+                    candidateBlocks.Add(i);
+                }
             }
+        }
+
+        if (isConnected == false)
+        {
+            var randomBlock = candidateBlocks[Random.Range(0, candidateBlocks.Count)];
+            connectivityStatus[randomBlock] = lastRowConnectivity[randomBlock];
+            currentRow[randomBlock] = -1;
         }
     }
 
@@ -294,21 +329,16 @@ public class MapGenerator
         List<int> currentRowDots = new List<int>();
         for (int index = 0; index < currentRow.Length; index++)
         {
-            Debug.Log("v h " + debugv + " " + index + " ### " + "check for next row hint");
             if (MapUtils.GetRowStatus(currentRow, index) == 1)
             {
-                Debug.Log("it is block");
                 continue;
             }
             currentRowDots.Add(index);
             if (MapUtils.GetRowStatus(currentRow, index, -1) + MapUtils.GetRowStatus(currentRow, index, 1) + lastRow[index] < 0)
             {
-                Debug.Log("it has more way to go: " + (MapUtils.GetRowStatus(currentRow, index, -1) + MapUtils.GetRowStatus(currentRow, index, 1) + lastRow[index] ));
-                continue;
+               continue;
             }
-
-
-            Debug.Log("v h " + debugv + " " + index + " ### " +  " ---> right or left is a wall");
+            
             rowHint[index] = -1;
             hasWay = true;
         }
@@ -347,9 +377,7 @@ public class MapGenerator
         //todo: SOOO KASSSSSSIIIIFFF
         for (int index = currentRow.Length - 2; index >= 0; index--)
         {
-            Debug.Log(" Be Man Mavad Bedahid:: " + MapUtils.GetRowStatus(currentRow, index, -1) + "  " + MapUtils.GetRowStatus(currentRow, index, 1) + "  %% " +
-                      MapUtils.GetRowStatus(currentRow, index, -2));
-            Debug.Log(index + "  -->> " + (MapUtils.CalculateIndex(index, -1)) + " :: " + MapUtils.GetRowStatus(currentRow, index, -1));
+
             if (MapUtils.GetRowStatus(currentRow, index) == 1)
             {
                 continue;
@@ -359,7 +387,6 @@ public class MapGenerator
                 MapUtils.GetRowStatus(currentRow, index, 1) == 1 &&
                 MapUtils.GetRowStatus(currentRow, index, -2) == 1)
             {
-                Debug.Log("%%%%%%%  double: " + index);
                 if (lastRow[index] != -1)
                 {
                     currentRow[index] = 1;
@@ -376,8 +403,7 @@ public class MapGenerator
     {
         int disjointDots = 0; //todo: remove?
         for (int i = 0; i < currentRow.Length; i++)
-        {   
-            // Debug.Log("i -->> " + MapUtils.MapStatus(map, i) + " ::: " + MapUtils.MapStatus(map, i, -1));
+        {
             if (MapUtils.GetRowStatus(currentRow, i) == -1 && MapUtils.GetRowStatus(currentRow, i, 1) == 1)
                 disjointDots++;
         }
@@ -469,7 +495,6 @@ public class MapGenerator
             
             if (MapUtils.GetRowStatus(currentRow, index) == -1 && MapUtils.GetRowStatus(currentRow, index, -1) == 1 && secondDots)
             {
-                Debug.Log(index + "   F:   rowHint[index]: " + rowHint[index]);
                 if (Random.value > MapUtils.DotChanceValue && rowHint[index] != -1)
                 {
                     Debug.Log("FF");
