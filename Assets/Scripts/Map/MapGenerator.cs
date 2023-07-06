@@ -15,9 +15,7 @@ public class MapGenerator
     private int[] rowHint;
     private int[] firstRow;
     private int[] verticalPortals;
-    
-    private int[] connectivityStatus;
-    private int[] lastRowConnectivity;
+
     private int connectivityId;
 
     private int[][] presetRow = {
@@ -54,8 +52,7 @@ public class MapGenerator
         {
             verticalPortals[i] = 1;
         }
-        connectivityStatus = new int[MapUtils.ColumnSize];
-        lastRowConnectivity = new int[MapUtils.ColumnSize];
+
         connectivityId = 0;
         presetRowIndex = Mathf.CeilToInt((MapUtils.MapVerticalSize - presetRow.Length) / 2f);
         for (int i = 0; i < lastRow.Length; i++)
@@ -90,8 +87,15 @@ public class MapGenerator
             {
                 EditOneToLastRow(j);
             }
+
+
+            var chosenBlocks = MapConnectivity.ConnectCells(lastRow, currentRow);
+            foreach (var blockId in chosenBlocks)
+            {
+                currentRow[blockId] = -1;
+            }
+                
             
-            CheckConnectivity();
 
             Array.Clear(rowHint, 0, rowHint.Length);
             CalculateNextRow();
@@ -219,107 +223,6 @@ public class MapGenerator
         }
                 
         currentRow[hIndex] = -1;
-    }
-    
-    private void CheckConnectivity()
-    {
-        for (int i = 0; i < currentRow.Length; i++)
-        {
-            if (currentRow[i] == -1)
-            {
-                SetConnectivityStatus(i);
-            }
-        }
-
-        HashSet<int> isolatedCells = new HashSet<int>();
-        for (int i = 0; i < lastRowConnectivity.Length; i++)
-        {
-            if (lastRowConnectivity[i] != 0 &&
-                connectivityStatus.Contains(lastRowConnectivity[i]) == false)
-            {
-                isolatedCells.Add(lastRowConnectivity[i]);
-            }   
-        }
-
-        if (isolatedCells.Count > 0)
-        {
-            ConnectCells(isolatedCells);
-        }
-        
-    }
-
-    private void ConnectCells(HashSet<int> isolatedIds)
-    {
-        bool isConnected = false;
-        List<int> candidateBlocks = new List<int>();
-        for (int i = 0; i < lastRowConnectivity.Length; i++)
-        {
-            if (isolatedIds.Contains(lastRowConnectivity[i]))
-            {
-                if (MapRules.MustPlaceBlock(lastRow, currentRow, i) == false)
-                {
-                    currentRow[i] = -1;
-                    connectivityStatus[i] = lastRowConnectivity[i];
-                    isConnected = true;
-                    if (Random.value > MapUtils.DotChanceValue)
-                    {
-                        isolatedIds.Remove(lastRowConnectivity[i]);
-                    }
-                }
-                else
-                {
-                    candidateBlocks.Add(i);
-                }
-            }
-        }
-
-        if (isConnected == false)
-        {
-            var randomBlock = candidateBlocks[Random.Range(0, candidateBlocks.Count)];
-            connectivityStatus[randomBlock] = lastRowConnectivity[randomBlock];
-            currentRow[randomBlock] = -1;
-        }
-    }
-
-    private void SetConnectivityStatus(int index)
-    {
-        //TODO: can do better
-        if (connectivityStatus[MapUtils.CalculateIndex(index, -1)] +
-            lastRowConnectivity[index] +
-            connectivityStatus[MapUtils.CalculateIndex(index, 1)] <= 0)
-        {
-            connectivityId += 1;
-            connectivityStatus[index] = connectivityId;
-        }
-        else if (connectivityStatus[MapUtils.CalculateIndex(index, -1)] > 0)
-        {
-            connectivityStatus[index] = connectivityStatus[MapUtils.CalculateIndex(index, -1)];
-            if (lastRowConnectivity[index] > 0 && lastRowConnectivity[index] != connectivityStatus[index])
-            {
-                UpdateConnectivityStatuses(lastRowConnectivity[index], connectivityStatus[index]);
-            }
-        }
-
-        else if (lastRowConnectivity[index] > 0)
-        {
-            connectivityStatus[index] = lastRowConnectivity[index];
-        }
-    }
-
-    private void UpdateConnectivityStatuses(int oldId, int newId)
-    {
-        for (int i = 0; i < connectivityStatus.Length; i++)
-        {
-            if (connectivityStatus[i] == oldId)
-            {
-                connectivityStatus[i] = newId;
-            }
-            
-            if (lastRowConnectivity[i] == oldId)
-            {
-                lastRowConnectivity[i] = newId;
-            }
-        }
     }
 
 
@@ -517,8 +420,6 @@ public class MapGenerator
         {
             Array.Copy(currentRow, firstRow, currentRow.Length);
         }
-        Array.Copy(connectivityStatus, lastRowConnectivity, connectivityStatus.Length);
-        Array.Clear(connectivityStatus, 0, connectivityStatus.Length);
         Array.Clear(currentRow, 0, currentRow.Length);
     }
 
