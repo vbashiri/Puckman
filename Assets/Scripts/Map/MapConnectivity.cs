@@ -14,7 +14,7 @@ public class MapConnectivity
     {
         get
         {
-            if (lastRowConnectivity == null)
+            if (lastRowConnectivity == null || lastRowConnectivity.Length != MapUtils.ColumnSize)
             {
                 lastRowConnectivity = new int[MapUtils.ColumnSize];
             }
@@ -24,11 +24,12 @@ public class MapConnectivity
         set => Array.Copy(value, lastRowConnectivity, LastRowConnectivity.Length);
     }
     
+    
     private static int[] ConnectivityStatus
     {
         get
         {
-            if (connectivityStatus == null)
+            if (connectivityStatus == null || connectivityStatus.Length != MapUtils.ColumnSize)
             {
                 connectivityStatus = new int[MapUtils.ColumnSize];
             }
